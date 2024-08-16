@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Layout, Menu, Upload, Button, Card, Input, List, message, Image } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
+import { uploadImageToImgur } from '@/utils/upload';
 
 const { Header, Content, Footer } = Layout;
 
@@ -13,32 +15,70 @@ type Photo = {
   comments: string[];
 };
 
+const apiURL = process.env.NEXT_PUBLIC_API_URL;
+
 const Home = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [caption, setCaption] = useState('');
   const [comment, setComment] = useState('');
 
-  const handleUpload = (file: any) => {
-    const newPhoto: Photo = {
-      id: photos.length + 1,
-      url: URL.createObjectURL(file),
-      caption,
-      comments: [],
+  useEffect(() => {
+    console.log(apiURL)
+    // Fetch photos from the API
+    const fetchPhotos = async () => {
+      try {
+        const response = await axios.get(`${apiURL}/api/photo`);
+        setPhotos(response.data.photos);
+      } catch (error) {
+        console.error('Failed to fetch photos:', error);
+        message.error('Failed to fetch photos');
+      }
     };
-    setPhotos([...photos, newPhoto]);
-    setCaption('');
-    message.success('Photo uploaded successfully!');
+
+    fetchPhotos();
+  }, []);
+
+  const handleUpload = async (file: File) => {
+    const imgurUrl = await uploadImageToImgur(file);
+
+    if (imgurUrl) {
+      try {
+        const response = await axios.post(`${apiURL}/api/photo`, {
+          url: imgurUrl,
+          caption,
+        });
+
+        setPhotos([...photos, response.data.photo]);
+        setCaption('');
+        message.success('Photo uploaded successfully!');
+      } catch (error) {
+        console.error('Failed to upload photo:', error);
+        message.error('Failed to upload photo');
+      }
+    } else {
+      message.error('Failed to upload photo to Imgur');
+    }
   };
 
-  const handleAddComment = (photoId: number) => {
-    setPhotos(
-      photos.map((photo) =>
-        photo.id === photoId
-          ? { ...photo, comments: [...photo.comments, comment] }
-          : photo
-      )
-    );
-    setComment('');
+  const handleAddComment = async (photoId: number) => {
+    try {
+      const response = await axios.post(`${apiURL}/api/comment/${photoId}`, {
+        data: comment,
+      });
+
+      setPhotos(
+        photos.map((photo) =>
+          photo.id === photoId
+            ? { ...photo, comments: [...photo.comments, response.data.comment.data] }
+            : photo
+        )
+      );
+      setComment('');
+      message.success('Comment added successfully!');
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+      message.error('Failed to add comment');
+    }
   };
 
   return (
@@ -50,6 +90,12 @@ const Home = () => {
       </Header>
       <Content style={{ padding: '50px' }}>
         <Card title="Upload Photo" style={{ marginBottom: '20px' }}>
+          <Input
+            placeholder="Enter caption"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            style={{ marginBottom: '10px' }}
+          />
           <Upload
             beforeUpload={(file) => {
               handleUpload(file);
@@ -57,12 +103,6 @@ const Home = () => {
             }}
             showUploadList={false}
           >
-            <Input
-              placeholder="Enter caption"
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              style={{ marginBottom: '10px' }}
-            />
             <Button icon={<UploadOutlined />}>Click to Upload</Button>
           </Upload>
         </Card>
