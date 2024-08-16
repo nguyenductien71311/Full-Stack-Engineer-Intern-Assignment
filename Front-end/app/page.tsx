@@ -23,15 +23,25 @@ const Home = () => {
   const [comment, setComment] = useState('');
 
   useEffect(() => {
-    console.log(apiURL)
-    // Fetch photos from the API
     const fetchPhotos = async () => {
       try {
-        const response = await axios.get(`${apiURL}/api/photo`);
-        setPhotos(response.data.photos);
+        const photosResponse = await axios.get(`${apiURL}/api/photo`);
+        const photos = photosResponse.data.photos;
+    
+        // Fetch comments for each photo
+        const commentsPromises = photos.map(async (photo: Photo) => {
+          const commentsResponse = await axios.get(`${apiURL}/api/comment/${photo.id}`);
+          return {
+            ...photo,
+            comments: commentsResponse.data.comments,
+          };
+        });
+    
+        const photosWithComments = await Promise.all(commentsPromises);
+        setPhotos(photosWithComments);
       } catch (error) {
-        console.error('Failed to fetch photos:', error);
-        message.error('Failed to fetch photos');
+        console.error('Failed to fetch photos and comments:', error);
+        message.error('Failed to fetch photos and comments');
       }
     };
 
