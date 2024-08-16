@@ -78,10 +78,6 @@ const Home = () => {
 
   const handleAddComment = async (photoId: number) => {
     try {
-      const response = await axios.post(`${apiURL}/api/comment/${photoId}`, {
-        data: comment,
-      });
-
       setPhotos(
         photos.map((photo) =>
           photo.id === photoId
@@ -89,6 +85,10 @@ const Home = () => {
             : photo
         )
       );
+      const response = await axios.post(`${apiURL}/api/comment/${photoId}`, {
+        data: comment,
+      });
+
       setComment('');
       message.success('Comment added successfully!');
     } catch (error) {
