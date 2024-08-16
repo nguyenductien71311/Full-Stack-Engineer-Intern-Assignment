@@ -82,10 +82,16 @@ const Home = () => {
         data: comment,
       });
 
+      const newComment: Comment = {
+        id: 9999999,
+        data: comment,
+        photoId: photoId
+      }
+
       setPhotos(
         photos.map((photo) =>
           photo.id === photoId
-            ? { ...photo, comments: [...photo.comments, response.data.comment.data] }
+            ? { ...photo, comments: [...photo.comments, newComment] }
             : photo
         )
       );
