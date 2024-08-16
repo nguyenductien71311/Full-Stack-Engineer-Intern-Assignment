@@ -8,11 +8,17 @@ import { uploadImageToImgur } from '@/utils/upload';
 
 const { Header, Content, Footer } = Layout;
 
+type Comment = {
+  id: number;
+  data: string;
+  photoId: number;
+}
+
 type Photo = {
   id: number;
   url: string;
   caption: string;
-  comments: string[];
+  comments: Comment[];
 };
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
@@ -127,7 +133,7 @@ const Home = () => {
               <List
                 dataSource={photo.comments}
                 renderItem={(comment, index) => (
-                  <List.Item key={index}>{comment}</List.Item>
+                  <List.Item key={index}>{comment.data}</List.Item>
                 )}
               />
               <Input
