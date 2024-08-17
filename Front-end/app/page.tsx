@@ -78,8 +78,14 @@ const Home = () => {
 
   const handleAddComment = async (photoId: number) => {
     try {
+      
+
+      const response = await axios.post(`${apiURL}/api/comment/${photoId}`, {
+        data: comment,
+      });
+
       const newComment: Comment = {
-        id: 9999999,
+        id: response.data.comment.id,
         data: comment,
         photoId: photoId
       }
@@ -88,18 +94,6 @@ const Home = () => {
         photos.map((photo) =>
           photo.id === photoId
             ? { ...photo, comments: [...photo.comments, newComment] }
-            : photo
-        )
-      );
-
-      const response = await axios.post(`${apiURL}/api/comment/${photoId}`, {
-        data: comment,
-      });
-
-      setPhotos(
-        photos.map((photo) =>
-          photo.id === photoId
-            ? { ...photo, comments: [...photo.comments, response.data.comment.data] }
             : photo
         )
       );
