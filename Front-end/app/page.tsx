@@ -33,7 +33,7 @@ const Home = () => {
       try {
         const photosResponse = await axios.get(`${apiURL}/api/photo`);
         const photos = photosResponse.data.photos;
-    
+
         // Fetch comments for each photo
         const commentsPromises = photos.map(async (photo: Photo) => {
           const commentsResponse = await axios.get(`${apiURL}/api/comment/${photo.id}`);
@@ -42,7 +42,7 @@ const Home = () => {
             comments: commentsResponse.data.comments,
           };
         });
-    
+
         const photosWithComments = await Promise.all(commentsPromises);
         setPhotos(photosWithComments);
       } catch (error) {
@@ -78,10 +78,6 @@ const Home = () => {
 
   const handleAddComment = async (photoId: number) => {
     try {
-      const response = await axios.post(`${apiURL}/api/comment/${photoId}`, {
-        data: comment,
-      });
-
       const newComment: Comment = {
         id: 9999999,
         data: comment,
@@ -92,6 +88,18 @@ const Home = () => {
         photos.map((photo) =>
           photo.id === photoId
             ? { ...photo, comments: [...photo.comments, newComment] }
+            : photo
+        )
+      );
+
+      const response = await axios.post(`${apiURL}/api/comment/${photoId}`, {
+        data: comment,
+      });
+
+      setPhotos(
+        photos.map((photo) =>
+          photo.id === photoId
+            ? { ...photo, comments: [...photo.comments, response.data.comment.data] }
             : photo
         )
       );
@@ -128,13 +136,14 @@ const Home = () => {
             <Button icon={<UploadOutlined />}>Click to Upload</Button>
           </Upload>
         </Card>
-        <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
           {photos.map((photo) => (
-            <Card
-              key={photo.id}
-              cover={<Image alt={photo.caption} src={photo.url} />}
-              style={{ marginBottom: '20px' }}
-            >
+            <Card key={photo.id} className="mb-5">
+              <Image
+                alt={photo.caption}
+                src={photo.url}
+                className="w-full h-64 object-cover rounded justify-center"
+              />
               <Card.Meta title={photo.caption} />
               <List
                 dataSource={photo.comments}
@@ -147,7 +156,7 @@ const Home = () => {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 onPressEnter={() => handleAddComment(photo.id)}
-                style={{ marginTop: '10px' }}
+                className="mt-2"
               />
             </Card>
           ))}
